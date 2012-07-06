@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. config/options
+. $PACKAGES/$1/meta
+
+cd $BUILD/${PKG_NAME}-${PKG_VERSION}
+
+tar xjvf linux-tbs-drivers.tar.bz2
+
+cd linux-tbs-drivers
+
+chmod -R +x linux v4l
+[ "$TARGET_ARCH" = "i386" ] && sh ./v4l/tbs-x86_r3.sh
+[ "$TARGET_ARCH" = "x86_64" ] && sh ./v4l/tbs-x86_64.sh
+
+make DIR=$(kernel_path) 
+strip_kmods "/root/openbricks/build/build.i386.eglibc/tbs-drivers-v120617/linux-tbs-drivers/v4l" "$debug_dir"
+

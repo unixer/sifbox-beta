@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. config/options
+
+cd $BUILD/$1*
+#do_configure
+#make
+#make_install
+mkdir .install
+cp -r usr .install
+cp -r etc .install

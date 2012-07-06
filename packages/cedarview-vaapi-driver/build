@@ -1,0 +1,8 @@
+#!/bin/sh
+
+. config/options
+
+cd $BUILD/$1*
+mkdir .install
+cp -r lib/firmware .install
+cp -r usr .install

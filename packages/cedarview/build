@@ -1,0 +1,26 @@
+#!/bin/sh
+
+. config/options
+export MAKEFLAGS=-j1
+export KMYDIR=/root/openbricks/build/build.i386.eglibc/cedarview-20120608
+#INCDIR="/root/openbricks/build/build.i386.eglibc/linux-3.4.4/tools/perf/util/include"
+
+
+$SCRIPTS/build linux
+
+cd $BUILD/$1*
+
+make \
+  KDIR=$(kernel_path) \
+
+read enterKey
+make \
+  DIR=$(kernel_path) \
+  KDIR=$(kernel_path) \
+  KVER=$(kernel_version) \
+  SRCDIR=$(kernel_path) \
+  OUTDIR=$(kernel_path) \
+
+read enterKey
+
+make_install

@@ -1,0 +1,47 @@
+--- cedarview-20120608/Makefile.org	2012-06-26 10:13:58.567523853 +0200
++++ cedarview-20120608/Makefile	2012-06-26 11:18:39.637525841 +0200
+@@ -2,14 +2,14 @@
+ # Makefile for the drm device driver.  This driver provides support for the
+ # Direct Rendering Infrastructure (DRI) in XFree86 4.1.0 and higher.
+ 
+-include /boot/config-$(KVER)
++include $(KDIR)/.config
+ 
+ export CONFIG_STAGING=y
+ export CONFIG_DRM_INTEL_CDV=m
+ export CONFIG_DRM_CDV_RELEASE=y
+ unexport CONFIG_DRM_PSB_CDV
+ 
+-ccflags-y := -I/var/lib/dkms/cedarview-drm/20120308/build/include
++ccflags-y := -I/root/openbricks/build/build.i386.eglibc/cedarview-20120608/include
+ 
+ drm-y       :=	drm_auth.o drm_buffer.o drm_bufs.o drm_cache.o \
+ 		drm_context.o drm_dma.o \
+@@ -47,7 +47,7 @@
+ obj-y			+= i2c/
+ 
+ all:
+-	make -C /lib/modules/$(KVER)/build M=`pwd` modules
++	make -C $(KDIR) M=`pwd` modules
+ 
+ clean:
+-	make -C /lib/modules/$(KVER)/build M=`pwd` clean
++	make -C $(KDIR) M=`pwd` clean
+--- cedarview-20120608/staging/cdv/Makefile.org	2012-06-26 12:35:19.027528196 +0200
++++ cedarview-20120608/staging/cdv/Makefile	2012-06-26 12:35:02.187528188 +0200
+@@ -14,12 +14,14 @@
+         -I$(INCDIR)/pvr/services4/srvkm/hwdefs \
+         -I$(INCDIR)/pvr/services4/srvkm/bridged/sgx \
+         -I$(INCDIR)/pvr/services4/srvkm/devices/sgx \
++	-I$(INCDIR)/pvr/services4/system/unified \
+         -I$(INCDIR)/ \
+         -I$(INCDIR)/drv \
+         -I$(INCDIR)/bc_video \
+         -I$(INCDIR)/imgv \
+ 	-Iinclude/linux \
+-	-Iinclude/drm
++	-Iinclude/drm \
++	-I/root/openbricks/build/build.i386.eglibc/linux-3.4.4/tools/perf/util/include
+ 
+  
+ ccflags-y += $(include_dirs)

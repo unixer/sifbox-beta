@@ -1,0 +1,13 @@
+#!/bin/sh
+
+. config/options
+
+cd $BUILD/$1*
+
+mkdir -p $SYSROOT_PREFIX/usr/include/ttm
+#cp * $SYSROOT_PREFIX/usr/include/ttm
+install -d -m 0755  $SYSROOT_PREFIX/usr/include/ttm
+install -m 0644 psb_drm.h $SYSROOT_PREFIX/usr/include
+install -m 0644 psb_ttm_fence_user.h $SYSROOT_PREFIX/usr/include 
+install -m 0644 psb_ttm_placement_user.h $SYSROOT_PREFIX/usr/include
+install -m 0644 ttm_placement.h $SYSROOT_PREFIX/usr/include/ttm

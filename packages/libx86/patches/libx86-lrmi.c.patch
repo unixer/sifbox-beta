@@ -1,0 +1,44 @@
+--- libx86-1.1/lrmi.c.org	2012-06-25 16:09:32.637490523 +0200
++++ libx86-1.1/lrmi.c	2012-06-25 16:12:02.917490601 +0200
+@@ -55,11 +55,11 @@
+ #include "x86-common.h"
+ 
+ #if defined(__linux__)
+-#define DEFAULT_VM86_FLAGS 	(IF_MASK | IOPL_MASK)
++#define DEFAULT_VM86_FLAGS 	(X86_EFLAGS_IF | X86_EFLAGS_IOPL)
+ #elif defined(__NetBSD__) || defined(__FreeBSD__)
+ #define DEFAULT_VM86_FLAGS  (PSL_I | PSL_IOPL)
+-#define TF_MASK         PSL_T
+-#define VIF_MASK        PSL_VIF
++#define X86_EFLAGS_TF         PSL_T
++#define X86_EFLAGS_VIF        PSL_VIF
+ #endif
+ #define DEFAULT_STACK_SIZE 	0x1000
+ #define RETURN_TO_32_INT 	255
+@@ -610,7 +610,7 @@
+ 
+ 			CONTEXT_REGS.REG(cs) = get_int_seg(v);
+ 			CONTEXT_REGS.REG(eip) = get_int_off(v);
+-			CONTEXT_REGS.REG(eflags) &= ~(VIF_MASK | TF_MASK);
++			CONTEXT_REGS.REG(eflags) &= ~(X86_EFLAGS_VIF | X86_EFLAGS_TF);
+ 
+ 			continue;
+ 		}
+@@ -650,7 +650,7 @@
+ 
+ 			CONTEXT_REGS.REG(cs) = get_int_seg(v);
+ 			CONTEXT_REGS.REG(eip) = get_int_off(v);
+-			CONTEXT_REGS.REG(eflags) &= ~(VIF_MASK | TF_MASK);
++			CONTEXT_REGS.REG(eflags) &= ~(X86_EFLAGS_VIF | X86_EFLAGS_TF);
+ 
+ 			break;
+ 		}
+@@ -704,7 +704,7 @@
+ 
+ 		CONTEXT_REGS.REG(cs) = get_int_seg(addr[1]);
+ 		CONTEXT_REGS.REG(eip) = get_int_off(addr[1]);
+-		CONTEXT_REGS.REG(eflags) &= ~(VIF_MASK | TF_MASK);
++		CONTEXT_REGS.REG(eflags) &= ~(X86_EFLAGS_VIF | X86_EFLAGS_TF);
+ 	} else {
+ 		if (emulate() == 0) {
+ 			context.success = 0;

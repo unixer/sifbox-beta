@@ -1,0 +1,53 @@
+From cff48cf178ec93de94b03119bc28b719c75bedbf Mon Sep 17 00:00:00 2001
+From: Joe Konno <joe.konno@intel.com>
+Date: Mon, 15 Aug 2011 11:34:58 -0700
+Subject: [PATCH] CDV include tweaks
+
+---
+ src/wsbm_fencemgr.c |    2 +-
+ src/wsbm_slabpool.c |    2 +-
+ src/wsbm_ttmpool.c  |    2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/wsbm_fencemgr.c b/src/wsbm_fencemgr.c
+index 0e7a302..4010ac9 100644
+--- a/src/wsbm_fencemgr.c
++++ b/src/wsbm_fencemgr.c
+@@ -38,7 +38,7 @@
+ #include "wsbm_pool.h"
+ #include "wsbm_manager.h"
+ #include <xf86drm.h>
+-#include <ttm/ttm_fence_user.h>
++#include <psb_ttm_fence_user.h>
+ #include <string.h>
+ #include <unistd.h>
+ 
+diff --git a/src/wsbm_slabpool.c b/src/wsbm_slabpool.c
+index 51a85d0..56f7d65 100644
+--- a/src/wsbm_slabpool.c
++++ b/src/wsbm_slabpool.c
+@@ -34,7 +34,7 @@
+ #include "config.h"
+ #endif
+ 
+-#include <ttm/ttm_placement_user.h>
++#include <psb_ttm_placement_user.h>
+ #include <stdint.h>
+ #include <sys/time.h>
+ #include <errno.h>
+diff --git a/src/wsbm_ttmpool.c b/src/wsbm_ttmpool.c
+index 5867428..93da32a 100644
+--- a/src/wsbm_ttmpool.c
++++ b/src/wsbm_ttmpool.c
+@@ -42,7 +42,7 @@
+ #include "assert.h"
+ #include "wsbm_priv.h"
+ #include "wsbm_manager.h"
+-#include "ttm/ttm_placement_user.h"
++#include <psb_ttm_placement_user.h>
+ 
+ #define DRMRESTARTCOMMANDWRITE(_fd, _val, _arg, _ret)			\
+ 	do {								\
+-- 
+1.7.4.4
+

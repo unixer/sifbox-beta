@@ -1,0 +1,207 @@
+diff -uBr libwsbm-old/src/wsbm_manager.c libwsbm/src/wsbm_manager.c
+--- libwsbm-old/src/wsbm_manager.c	2009-08-20 12:09:37.000000000 -0700
++++ libwsbm/src/wsbm_manager.c	2010-06-25 19:03:58.305282722 -0700
+@@ -610,6 +610,139 @@
+     return retval;
+ }
+ 
++int
++wsbmBODataUB(struct _WsbmBufferObject *buf,
++	   unsigned size, const void *data,
++	   struct _WsbmBufferPool *newPool, uint32_t placement, const unsigned long *user_ptr)
++{
++    void *virtual = NULL;
++    int newBuffer;
++    int retval = 0;
++    struct _WsbmBufStorage *storage;
++    int synced = 0;
++    uint32_t placement_diff;
++    struct _WsbmBufferPool *curPool;
++    extern struct _WsbmBufStorage *
++ttm_pool_ub_create(struct _WsbmBufferPool *pool,
++	            unsigned long size, uint32_t placement, unsigned alignment, const unsigned long *user_ptr);
++
++    if (buf->bufferType == WSBM_BUFFER_SIMPLE)
++	return -EINVAL;
++
++    storage = buf->storage;
++
++    if (newPool == NULL)
++	newPool = buf->pool;
++
++    if (newPool == NULL)
++	return -EINVAL;
++
++    newBuffer = (!storage || storage->pool != newPool ||
++		 storage->pool->size(storage) < size ||
++		 storage->pool->size(storage) >
++		 size + WSBM_BODATA_SIZE_ACCEPT);
++
++    if (!placement)
++	placement = buf->placement;
++
++    if (newBuffer) {
++	if (buf->bufferType == WSBM_BUFFER_REF)
++	    return -EINVAL;
++
++	wsbmBufStorageUnref(&buf->storage);
++
++	if (size == 0) {
++	    buf->pool = newPool;
++	    buf->placement = placement;
++	    retval = 0;
++	    goto out;
++	}
++
++	buf->storage =
++	    //newPool->create(newPool, size, placement, buf->alignment);
++        ttm_pool_ub_create(newPool, size, placement, buf->alignment, user_ptr);
++	if (!buf->storage) {
++	    retval = -ENOMEM;
++	    goto out;
++	}
++
++	buf->placement = placement;
++	buf->pool = newPool;
++    } else if (wsbmAtomicRead(&storage->onList) ||
++	       0 != storage->pool->syncforcpu(storage, WSBM_SYNCCPU_WRITE |
++					      WSBM_SYNCCPU_DONT_BLOCK)) {
++	/*
++	 * Buffer is busy. need to create a new one.
++	 */
++
++	struct _WsbmBufStorage *tmp_storage;
++
++	curPool = storage->pool;
++
++	tmp_storage =
++	    curPool->create(curPool, size, placement, buf->alignment);
++
++	if (tmp_storage) {
++	    wsbmBufStorageUnref(&buf->storage);
++	    buf->storage = tmp_storage;
++	    buf->placement = placement;
++	} else {
++	    retval = curPool->syncforcpu(storage, WSBM_SYNCCPU_WRITE);
++	    if (retval)
++		goto out;
++	    synced = 1;
++	}
++    } else
++	synced = 1;
++
++    placement_diff = placement ^ buf->placement;
++
++    /*
++     * We might need to change buffer placement.
++     */
++
++    storage = buf->storage;
++    curPool = storage->pool;
++
++    if (placement_diff) {
++	assert(curPool->setStatus != NULL);
++	curPool->releasefromcpu(storage, WSBM_SYNCCPU_WRITE);
++	retval = curPool->setStatus(storage,
++				    placement_diff & placement,
++				    placement_diff & ~placement);
++	if (retval)
++	    goto out;
++
++	buf->placement = placement;
++
++    }
++
++    if (!synced) {
++	retval = curPool->syncforcpu(buf->storage, WSBM_SYNCCPU_WRITE);
++
++	if (retval)
++	    goto out;
++	synced = 1;
++    }
++
++    storage = buf->storage;
++    curPool = storage->pool;
++
++    if (data) {
++	retval = curPool->map(storage, WSBM_ACCESS_WRITE, &virtual);
++	if (retval)
++	    goto out;
++	memcpy(virtual, data, size);
++	curPool->unmap(storage);
++    }
++
++  out:
++
++    if (synced)
++	curPool->releasefromcpu(storage, WSBM_SYNCCPU_WRITE);
++
++    return retval;
++}
+ static struct _WsbmBufStorage *
+ wsbmStorageClone(struct _WsbmBufferObject *buf)
+ {
+diff -uBr libwsbm-old/src/wsbm_ttmpool.c libwsbm/src/wsbm_ttmpool.c
+--- libwsbm-old/src/wsbm_ttmpool.c	2009-08-20 12:09:37.000000000 -0700
++++ libwsbm/src/wsbm_ttmpool.c	2010-06-25 19:03:58.304282858 -0700
+@@ -507,3 +507,60 @@
+     pool->setStatus = &pool_setStatus;
+     return pool;
+ }
++
++
++struct _WsbmBufStorage *
++ttm_pool_ub_create(struct _WsbmBufferPool *pool,
++	    unsigned long size, uint32_t placement, unsigned alignment, const unsigned long *user_ptr)
++{
++    struct _TTMBuffer *dBuf = (struct _TTMBuffer *)
++	calloc(1, sizeof(*dBuf));
++    struct _TTMPool *ttmPool = containerOf(pool, struct _TTMPool, pool);
++    int ret;
++    unsigned pageSize = ttmPool->pageSize;
++    union ttm_pl_create_ub_arg arg;
++
++    if (!dBuf)
++	return NULL;
++
++    if ((alignment > pageSize) && (alignment % pageSize))
++	goto out_err0;
++
++    ret = wsbmBufStorageInit(&dBuf->buf, pool);
++    if (ret)
++	goto out_err0;
++
++    ret = WSBM_COND_INIT(&dBuf->event);
++    if (ret)
++	goto out_err1;
++
++    arg.req.size = size;
++    arg.req.placement = placement;
++    arg.req.page_alignment = alignment / pageSize;
++    arg.req.user_address = user_ptr;
++
++    DRMRESTARTCOMMANDWRITEREAD(pool->fd, ttmPool->devOffset + TTM_PL_CREATE_UB,
++			       arg, ret);
++
++    if (ret)
++	goto out_err2;
++
++    dBuf->requestedSize = size;
++    dBuf->kBuf.gpuOffset = arg.rep.gpu_offset;
++    dBuf->mapHandle = arg.rep.map_handle;
++    dBuf->realSize = arg.rep.bo_size;
++    dBuf->kBuf.placement = arg.rep.placement;
++    dBuf->kBuf.handle = arg.rep.handle;
++
++    return &dBuf->buf;
++
++  out_err2:
++    WSBM_COND_FREE(&dBuf->event);
++  out_err1:
++    wsbmBufStorageTakedown(&dBuf->buf);
++  out_err0:
++    free(dBuf);
++    return NULL;
++}
++
++

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+. config/options
+
+cd $BUILD/$1*
+
+do_install usr/lib/libwsbm.la
+do_install usr/lib/libwsbm.so
+do_install usr/lib/libwsbm.so.1
+do_install usr/lib/libwsbm.so.1.1.0

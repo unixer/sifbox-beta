@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. config/options
+
+export LD_LIBRARY_PATH=$SYSROOT_PREFIX/usr/lib:$LD_LIBRARY_PATH
+
+
+cd $BUILD/$1*
+#do_configure
+make
+make_install

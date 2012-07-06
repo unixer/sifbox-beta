@@ -1,0 +1,25 @@
+From e9722b4ff89804d2f4cc3912789eaf86b65309a6 Mon Sep 17 00:00:00 2001
+From: Alberto Milone <alberto.milone@canonical.com>
+Date: Mon, 5 Mar 2012 10:16:34 +0100
+Subject: [PATCH 1/1] Change path in ttm/Makefile
+
+---
+ ttm/Makefile |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/ttm/Makefile b/ttm/Makefile
+index f3cf6f0..d103724 100644
+--- a/ttm/Makefile
++++ b/ttm/Makefile
+@@ -1,7 +1,7 @@
+ #
+ # Makefile for the drm device driver.  This driver provides support for the
+ 
+-ccflags-y := -Iinclude/drm
++ccflags-y := -I$(KMYDIR)/include
+ ttm-y := ttm_agp_backend.o ttm_memory.o ttm_tt.o ttm_bo.o \
+ 	ttm_bo_util.o ttm_bo_vm.o ttm_module.o \
+ 	ttm_object.o ttm_lock.o ttm_execbuf_util.o ttm_page_alloc.o \
+-- 
+1.7.5.4
+

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. config/options
+
+cd $BUILD/$1*
+
+# pkg_uses $1 devtools && do_install usr/bin
+do_install usr/lib/libdce.so*
+
+mkdir -p $INSTALL/etc
+cp $ROOT/$PACKAGES/$1/config/syslink.conf $INSTALL/etc
